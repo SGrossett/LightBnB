@@ -82,16 +82,16 @@ exports.addUser = addUser;
 
   return pool
   .query(`
-  SELECT properties.*, reservations.*, AVG(rating) as average_rating
-  FROM properties
-  JOIN reservations ON reservations.property_id = properties.id
-  JOIN users ON guest_id = users.id
-  JOIN property_reviews ON property_reviews.property_id = properties.id
-  WHERE reservations.guest_id = $1 AND end_date < now()::date
-  GROUP BY properties.id, reservations.id
-  ORDER BY start_date
-  LIMIT $2
-  `, [guest_id, limit])
+    SELECT properties.*, reservations.*, AVG(rating) as average_rating
+    FROM properties
+    JOIN reservations ON reservations.property_id = properties.id
+    JOIN users ON guest_id = users.id
+    JOIN property_reviews ON property_reviews.property_id = properties.id
+    WHERE reservations.guest_id = $1 AND end_date < now()::date
+    GROUP BY properties.id, reservations.id
+    ORDER BY start_date
+    LIMIT $2
+    `, [guest_id, limit])
   .then((result) => result.rows)
   .catch((err) => err.message);
 }
@@ -131,12 +131,6 @@ const getAllProperties = function(options, limit = 10) {
 
     values.length > 0 ? connect = 'AND' : connect = 'WHERE';
     queryString += `${connect} owner_id = $${values.length}`;
-
-    // if (values.length > 0) {
-    //   queryString += `AND owner_id = $${values.length}`;
-    // } else {
-    //   queryString += `WHERE owner_id = $${values.length}`;
-    // }
   }
 
   if (options.minimum_price_per_night) {
@@ -144,12 +138,6 @@ const getAllProperties = function(options, limit = 10) {
 
     values.length > 0 ? connect = 'AND' : connect = 'WHERE';
     queryString += `${connect} minimum_price_per_night >= $${values.length}`;
-
-    // if (values.length > 0) {
-    //   queryString += `AND minimum_price_per_night >= $${values.length}`;
-    // } else {
-    //   queryString += `WHERE minimum_price_per_night >= $${values.length}`;
-    // }
   }
 
   if (options.maximum_price_per_night) {
@@ -157,12 +145,6 @@ const getAllProperties = function(options, limit = 10) {
 
     values.length > 0 ? connect = 'AND' : connect = 'WHERE';
     queryString += `${connect} maximum_price_per_night <= $${values.length}`;
-
-    // if (values.length > 0) {
-    //   queryString += `AND maximum_price_per_night <= $${values.length}`;
-    // } else {
-    //   queryString += `WHERE maximum_price_per_night <= $${values.length}`;
-    // }
   }
 
   if (options.minimum_rating) {
@@ -170,12 +152,6 @@ const getAllProperties = function(options, limit = 10) {
 
     values.length > 0 ? connect = 'AND' : connect = 'WHERE';
     queryString += `${connect} rating >= $${values.length}`;
-
-    // if (values.length > 0) {
-    //   queryString += `AND minimum_rating >= $${values.length}`;
-    // } else {
-    //   queryString += `WHERE minimum_rating >= $${values.length}`;
-    // }
   }
   
   // Add any query that comes after the WHERE clause.
@@ -222,10 +198,10 @@ const addProperty = function(property) {
 
   return pool
     .query(`
-    INSERT INTO properties (owner_id, title, description, thumbnail_photo_url, cover_photo_url, cost_per_night, parking_spaces, number_of_bathrooms, number_of_bedrooms, country, street, city, province, post_code) 
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-    RETURNING *
-    `, propertyDetails)
+      INSERT INTO properties (owner_id, title, description, thumbnail_photo_url, cover_photo_url, cost_per_night, parking_spaces, number_of_bathrooms, number_of_bedrooms, country, street, city, province, post_code) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      RETURNING *
+      `, propertyDetails)
     .then((result) => { console.log('result.rows:', result.rows); return result.rows})
     .catch((err) => console.log('Error:', err.message) );
 }
