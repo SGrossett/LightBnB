@@ -106,11 +106,92 @@ exports.getAllReservations = getAllReservations;
  * @return {Promise<[{}]>}  A promise to the properties.
  */
 const getAllProperties = function(options, limit = 10) {
-  const limitedProperties = {};
-  for (let i = 1; i <= limit; i++) {
-    limitedProperties[i] = properties[i];
+  // An arry to hold any parameters that may be available for the query
+  const values = [];
+  let connect = '';
+  console.log('In allProperties')
+
+  // All the information that comes before the WHERE clause
+  let queryString = `
+  SELECT properties.*, AVG(property_reviews.rating) AS average_rating
+  FROM properties
+  JOIN property_reviews ON property_id = properties.id
+  `;
+  console.log('In getProperties');
+
+  // Check if a city, owner_id, min or max price/night, or minimum_rating has been passed in as an option.
+  // Add the city to the params array and create a WHERE clause for the city.
+  if (options.city) {
+    values.push(`%${options.city}%`);
+    queryString += `WHERE city LIKE $${values.length} `;
   }
-  return Promise.resolve(limitedProperties);
+
+  if (options.owner_id) {
+    values.push(options.owner_id);
+
+    values.length > 0 ? connect = 'AND' : connect = 'WHERE';
+    queryString += `${connect} owner_id = $${values.length}`;
+
+    // if (values.length > 0) {
+    //   queryString += `AND owner_id = $${values.length}`;
+    // } else {
+    //   queryString += `WHERE owner_id = $${values.length}`;
+    // }
+  }
+
+  if (options.minimum_price_per_night) {
+    values.push(options.minimum_price_per_night)
+
+    values.length > 0 ? connect = 'AND' : connect = 'WHERE';
+    queryString += `${connect} minimum_price_per_night >= $${values.length}`;
+
+    // if (values.length > 0) {
+    //   queryString += `AND minimum_price_per_night >= $${values.length}`;
+    // } else {
+    //   queryString += `WHERE minimum_price_per_night >= $${values.length}`;
+    // }
+  }
+
+  if (options.maximum_price_per_night) {
+    values.push(options.maximum_price_per_night)
+
+    values.length > 0 ? connect = 'AND' : connect = 'WHERE';
+    queryString += `${connect} maximum_price_per_night <= $${values.length}`;
+
+    // if (values.length > 0) {
+    //   queryString += `AND maximum_price_per_night <= $${values.length}`;
+    // } else {
+    //   queryString += `WHERE maximum_price_per_night <= $${values.length}`;
+    // }
+  }
+
+  if (options.minimum_rating) {
+    values.push(options.minimum_rating)
+
+    values.length > 0 ? connect = 'AND' : connect = 'WHERE';
+    queryString += `${connect} rating >= $${values.length}`;
+
+    // if (values.length > 0) {
+    //   queryString += `AND minimum_rating >= $${values.length}`;
+    // } else {
+    //   queryString += `WHERE minimum_rating >= $${values.length}`;
+    // }
+  }
+  
+  // Add any query that comes after the WHERE clause.
+  values.push(limit);
+  queryString += `
+  GROUP BY properties.id
+  ORDER BY cost_per_night
+  LIMIT $${values.length};
+  `;
+
+  console.log(queryString, values);
+
+  return pool
+    .query(queryString, values)
+    .then((result) => { console.log('result.rows:', result.rows); return result.rows})
+    .catch((err) => console.log('Error:', err.message) );
 }
 exports.getAllProperties = getAllProperties;
 
